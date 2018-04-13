@@ -1,0 +1,45 @@
+{
+    "model" : {
+        "architecture":         "Full Yolo",
+        "input_size":           416,
+        "anchors":              [0.57273, 0.677385, 1.87446, 2.06253, 3.33843, 5.47434, 7.88282, 3.52778, 9.77052, 9.16828],
+        "max_box_per_image":    10,        
+        "labels":               ["person", "car", "chair", "book", "bottle", "cup", "dining table", "bowl", "traffic light", "handbag",
+                                 "umbrella", "boat", "bird", "truck", "banana", "bench", "sheep", "kite", "backpack", "motorcycle",
+                                 "potted plant", "cow", "wine glass", "carrot", "knife", "donut", "bicycle", "broccoli", "skis", "vase",
+                                 "horse", "orange", "cake", "cell phone", "tie", "sports ball", "bus", "clock", "apple", "spoon",
+                                 "suitcase", "surfboard", "remote", "couch", "tv", "skateboard", "pizza", "sink", "fork", "elephant",
+                                 "airplane", "dog", "zebra", "giraffe", "teddy bear", "laptop", "tennis racket", "cat", "train", "sandwich",
+                                 "bed", "toilet", "baseball glove", "baseball bat", "oven", "hot dog", "keyboard", "snowboard", "refrigerator", "frisbee",
+                                 "mouse", "toothbrush", "stop sign", "fire hydrant", "microwave", "scissors", "bear", "parking meter", "toaster", "hair drier"]
+    },
+
+    "train": {
+        "train_image_folder":   "/home/annt/workspace/assets/datasets/coco/images/train2014/",
+        "train_annot_folder":   "/home/annt/workspace/assets/datasets/coco/annotations/train2014ann/",
+        
+        "max_train_samples":    -1,
+        "n_trainable_layers":   -1,
+        "train_times":          1,
+        "pretrained_weights":   "",
+        "batch_size":           32,
+        "learning_rate":        1e-4,
+        "nb_epoch":             3,
+        "warmup_epochs":        0,
+
+        "object_scale":         5.0,
+        "no_object_scale":      1.0,
+        "coord_scale":          1.0,
+        "class_scale":          1.0,
+
+        "saved_weights_name":   "weights_objects_all_fullyolo_{epoch:02d}-{val_loss:.2f}.h5",
+        "debug":                true
+    },
+
+    "valid": {
+        "valid_image_folder":   "/home/annt/workspace/assets/datasets/coco/images/val2014/",
+        "valid_annot_folder":   "/home/annt/workspace/assets/datasets/coco/annotations/val2014ann/",
+
+        "valid_times":          1
+    }
+}

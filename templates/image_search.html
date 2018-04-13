@@ -1,0 +1,297 @@
+<!-- 
+    UI for Multi-Objects Detection:
+        + Search images via FLickr API
+        + Image thumnails founded are rendered in left column in grid layout by 'row-grid.js' (https://github.com/brunjo/rowGrid.js/)
+        + Click on image will trigger Backend AI service to detect objects (80 kinds at all) in the image.
+        + Result are larger image with bounding box, number of instances in each object,... rendered on the right column.
+
+    Author:
+        Nguyen Thanh An <an.thanh.nguyen.vn@gmail.com>
+ -->
+
+<html>
+<head>
+    <title>Multi-Objects Detection at AI Lab </title>
+    <style>
+        /* row grid */
+        .container:before,
+        .container:after {
+          content: "";
+          display: table;
+        }
+        .container:after {
+          clear: both;
+        }
+        .item {
+          float: left;
+          margin-bottom: 10px;
+          position: relative;
+        }
+        .item img {
+          max-width: 100%;
+          max-height: 100%;
+          vertical-align: bottom;
+        }
+        .first-item {
+          clear: both;
+        }
+        /* remove margin bottom on last row */
+        .last-row, .last-row ~ .item {
+          margin-bottom: 0;
+        }
+
+        /* search */
+        .head {
+            margin: 60 auto;
+            width: 50%;
+            text-align: center;
+            box-shadow: 1px 1px 1px #DCDCDC;
+        }
+        #searchText {
+            background-image: url( '{{ url_for('static', filename='icon-blue.png') }}');
+            background-size: 16px;
+            background-repeat: no-repeat;
+            background-position: 98% center;
+            font-size: 15px;
+            font-family: Helvetica Neue;
+            width: 100%;
+            height: 40px;
+        }
+        #searchText[type="text"] {
+            padding-left: 10px;
+        }
+        .head:hover, #searchText:focus {
+            box-shadow: 1px 1px 5px 1px #DCDCDC;
+            transition: opacity 0.3s ease-in-out;
+            outline: none;
+        }
+
+        /* container */
+        .container {
+            float: left;
+            width: 35%;
+            height: 80%;
+            padding-right: 10px;
+            overflow-y: scroll;
+        }
+
+        /* prediction */
+        .prediction {
+            float: right;
+            width: 64%;
+            height: 80%;
+        }
+        .prediction-results {
+            display: block;
+            margin: 32 auto auto 64;
+        }
+        .prediction-results img {
+            height: 420px;
+        }
+        .prediction-results img:hover {
+            box-shadow: 1px 1px 3px 2px #DCDCDC;
+            transition: opacity 0.3s ease-in-out;
+        }
+/*        .objects-count p {
+            display: block;
+            margin: 50 auto;
+        }*/
+
+        /* overlay on mouseover*/
+        .overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: black;
+            opacity: 0.7;
+            overflow: hidden;
+            width: 100%;
+            height: 0;
+        }
+        .item:hover .overlay {
+            height: 15px;
+        }
+        .text-overlay {
+            color: white;
+            font-size: 11px;
+            font-family: sans-serif;
+            position: absolute;
+            top: 50%;
+            left: 30px;
+            transform: translate(-50%, -50%);
+            -ms-transform: translate(-50%, -50%);
+            text-align: left;
+            text-overflow: clip;
+        }
+        
+    </style>
+
+    <script src="{{ url_for('static', filename='jquery-3.2.1.js') }}" ></script>
+    <script src="{{ url_for('static', filename='jquery.row-grid.js') }}"></script>
+    <script>
+
+        // API keys for image search on Flickr
+        var api_key = 'ebc546e2f2a7dbb7e268632b957a1f82'; // free register at (https://www.flickr.com/services/api)
+        var secret = 'bca9ea66d832ea38';
+        // API for multi-objects detection 
+        var predictAPI = "http://localhost:4000/predict"; // port 4000 by default
+        // thumnail images from search results
+        var max_num_imgs = 1000; // limit number of images to be shown
+        var thumnail_height = 100; // show image result in thumnail
+
+        var init_grid = function() {
+            $(".container").rowGrid({
+                itemSelector: ".item",
+                minMargin: 10,
+                maxMargin: 15,
+                resize: true,
+                lastRowClass: "last-row",
+                firstItemClass: "first-item"
+            });
+        };
+
+        var update_grid = function() {
+            $(".container").rowGrid("appended");
+        };
+
+        var getFlickrImages = function(tags, per_page, is_initializing) {
+            var flickerAPI = "https://api.flickr.com/services/rest";
+
+            var flickrOptions = {
+                method: 'flickr.photos.search',
+                api_key: api_key,
+                tags: tags,
+                per_page: per_page,
+                extras: 'url_t,url_m,url_o',
+                format: 'json',
+                nojsoncallback: 1
+            }
+
+            $.getJSON(flickerAPI, flickrOptions).done( function (data) {
+
+                if (data.stat == "fail") {
+                    console.log('Request failed! Message: ' + data.message);
+                } else {
+                    var photos = data.photos.photo;
+                    var index = 0;
+                    var is_initializing_grid = true;
+
+                    var loadImage = function() {
+                        var item = photos[index];
+                        index++;
+
+                        if (item != null) {
+                            var thumnail_image = item.url_t;
+                            var medium_image = item.url_m;
+                            var original_image = item.url_o;
+                            var title = item.title;
+                            var width_m = item.width_m;
+                            var height_m = item.height_m;
+
+                            if (!thumnail_image) {
+                                thumnail_image = medium_image;
+                                console.log('Thumnail not found! Use medium size: ' + medium_image);
+                            }
+
+                            var div_item = $("<div/>").attr({"class": "item"}).appendTo($(".container"));
+
+                            $("<img>").attr({
+                                    "src": thumnail_image,
+                                    "height": thumnail_height
+                                })
+                                .appendTo(div_item)
+                                .click( function () {
+
+                                    var predictOptions = {"link": medium_image};
+
+                                    // show image just been clicked
+                                    $(".prediction-results").empty().append($("<img/>").attr({"src": medium_image, "alt": "Photo"}));
+
+                                    // then send request to backend service for multi-objects detection
+                                    $.post(predictAPI, predictOptions).done(function (data) {
+                                        console.log(data);
+                                        pred_src = "data:image/jpg;base64," + data["img_encoded"];
+
+                                        $("<img>").attr({"src": pred_src}).on("load", function () {
+                                            // upon receiving response, append predicted image
+                                            $(".prediction-results").empty().append($(this));
+
+                                            // also display number of objects in image
+                                            objects_count = data['objects_count']
+                                            var count_str = "";
+                                            for (var obj in objects_count) {
+                                                count_str += "<b>" + obj + "</b>: " + objects_count[obj] + "<br>";
+                                            }
+                                            if (count_str == "") {
+                                                count_str = "No objects found ~.~"
+                                            }
+
+                                            var founded_objects = $("<p>" + count_str + "</p>");
+                                            $(".prediction-results").append(founded_objects);
+                                            console.log(founded_objects);
+
+                                        });
+                                    });
+                                })
+                                .on( "load", function () {
+                                    if (is_initializing_grid) {
+                                        init_grid();
+                                        is_initializing_grid = false;
+                                    } else {
+                                        update_grid();
+                                    }
+                                    loadImage();
+                                });
+
+                            $("<div class='overlay'> <div class='text-overlay'>" + width_m + " &times; " + height_m + "</div> </div>").appendTo(div_item);
+                        }
+                    }
+
+                    loadImage();
+                }
+            });
+        };
+
+        var searchImages = function () {
+            searchText = $("#searchText").val();
+            console.log('Search: ' + searchText);
+            $( ".container" ).empty();
+            getFlickrImages(searchText, max_num_imgs, true);
+        }
+
+        $(document).ready( function(){
+
+            $('#searchButton').click( function () {
+                searchImages();
+            });
+
+            $('#searchText').on("keypress", function (e) {         
+                if (e.keyCode == 13) {  // Enter keycode
+                    e.preventDefault();
+                    searchImages();
+                }
+            });
+
+        });
+
+    </script>
+</head>
+
+<body>
+    <!-- image search box -->
+    <div class='head'>
+        <input id="searchText" type="text" placeholder="Search images..." autofocus />
+    </div>
+
+    <div>
+        <!-- search results -->
+        <div class='container'></div>
+
+        <!-- prediction -->
+        <div class='prediction'>
+            <div class='prediction-results'></div>
+        </div>
+    </div>
+</body>
+</html>
