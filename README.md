@@ -4,8 +4,8 @@ Model trained on MS COCO 2014, 80 classes. <br>
 
 Demo: https://youtu.be/x7JFWPNRGSA
 
-![Alt text](detected_images/street.jpg?raw=true "Lifestyle on street")
-![Alt text](detected_images/nature.jpg?raw=true "Beauty of nature")
+![Alt text](detected_images/street.png "Lifestyle on street")
+![Alt text](detected_images/nature.png "Beauty of nature")
 
 
 
