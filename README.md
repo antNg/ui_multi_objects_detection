@@ -18,4 +18,3 @@ Demo: https://youtu.be/x7JFWPNRGSA
 ![Alt text](detected_images/41422439001_5988882f3b.jpg)
 ![Alt text](detected_images/39609942600_702248c371.jpg)
 
-
