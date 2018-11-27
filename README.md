@@ -1,6 +1,8 @@
 # Play Multi-objects Detection on Flickr images
-Model trained on MS COCO 2014, 80 classes. <br>
 
+Model trained on MS COCO 2014, 80 classes. <br>
+Original source: https://github.com/experiencor/keras-yolo2 <br>
+<br>
 Demo: https://youtu.be/x7JFWPNRGSA
 
 ![Alt text](detected_images/street.png "Lifestyle on street")
